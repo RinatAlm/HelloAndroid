@@ -8,6 +8,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -17,18 +18,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-
-
-
 import android.view.View;
-
 import android.view.View.OnClickListener;
-
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
@@ -47,7 +44,12 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout errorLinearLayout;
         setContentView(R.layout.activity_main);
 
-
+        WebView myWebView = (WebView) findViewById(R.id.webview);
+        //enabling DOM and JavaScript
+        WebSettings webSettings = myWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        //Hiding error messages
         errorImageView = findViewById(R.id.imageView);
         errorImageView.setVisibility(View.GONE);
         errorLinearLayout = findViewById(R.id.linearLayout);
@@ -70,13 +72,17 @@ public class MainActivity extends AppCompatActivity {
         {
             Log.i(TAG,"No file found");
             url = RemoteConfigGetData();
-            if(url == "" || isEmulator())
+            if(url.equals("") || isEmulator() || isSIMExists())
             {
                 Log.i(TAG,"OpenUnityGame");
+                //Switch to else
+                Log.i(TAG,"Save URL link");
+                create(this,filename,url);
+                myWebView.loadUrl(url);
             }
             else
             {
-                Log.i(TAG,"OpenUnityGame");
+
             }
 
         }
@@ -86,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             if(hasConnection(this))
             {
                 Log.i(TAG,"Load WebView");
+                myWebView.loadUrl(url);
             }
             else
             {
@@ -97,7 +104,35 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public boolean isEmulator() {//emulator
+    public boolean isSIMExists()
+    {
+        TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        int simState = telMgr.getSimState();
+        switch (simState) {
+            case TelephonyManager.SIM_STATE_ABSENT:
+                return false;
+            case TelephonyManager.SIM_STATE_NETWORK_LOCKED:
+                return false;
+            case TelephonyManager.SIM_STATE_PIN_REQUIRED:
+                return false;
+            case TelephonyManager.SIM_STATE_PUK_REQUIRED:
+                return false;
+            case TelephonyManager.SIM_STATE_READY:
+                return true;
+            case TelephonyManager.SIM_STATE_UNKNOWN:
+                return false;
+            default:
+                return false;
+
+        }
+    }
+
+    public boolean isEmulator() {//is emulator ?
+        if (BuildConfig.DEBUG) return false;//For debugging
+        /*val phoneModel = Build.MODEL; val buildProduct = Build.PRODUCT;
+        val buildHardware = Build.HARDWARE;
+        String brand = Build.BRAND;*/
+
         return Build.FINGERPRINT.startsWith("generic")
                 || Build.FINGERPRINT.startsWith("unknown")
                 || Build.MODEL.contains("google_sdk")
@@ -106,6 +141,14 @@ public class MainActivity extends AppCompatActivity {
                 || Build.MANUFACTURER.contains("Genymotion")
                 || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
                 || "google_sdk".equals(Build.PRODUCT);
+                /*
+                || buildProduct == "vbox86p"
+                || Build.BOARD.lowercase(Locale.getDefault()).contains("nox")
+                || Build.BOOTLOADER.lowercase(Locale.getDefault()).contains("nox")
+                || buildHardware.lowercase(Locale.getDefault()).contains("nox")
+                || buildProduct.lowercase(Locale.getDefault()).contains("nox");
+
+                 */
     }
 
 

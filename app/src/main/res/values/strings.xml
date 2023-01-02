@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Hello</string>
+    <string name="connection_Error">Internet Connection Error</string>
+    <string name="connectionRequired">Для работы приложения необжодим доступ к сети</string>
+    <string name="ОК_text">ОК</string>
+
 </resources>

@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -24,6 +25,8 @@ import android.view.View;
 import android.view.View.OnClickListener;
 
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -40,17 +43,74 @@ public class MainActivity extends AppCompatActivity {
         String filename = "url_storage.json";
         String TAG = "MainActivity";
         String url;
+        ImageView errorImageView;
+        LinearLayout errorLinearLayout;
         setContentView(R.layout.activity_main);
+
+
+        errorImageView = findViewById(R.id.imageView);
+        errorImageView.setVisibility(View.GONE);
+        errorLinearLayout = findViewById(R.id.linearLayout);
+        errorLinearLayout.setVisibility(View.GONE);
+
+
+        //Button
         Button btn1 = (Button) findViewById(R.id.button);
         btn1.setOnClickListener(new OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                // TODO Auto-generated method stub
                 finish();
                 System.exit(0);
             }});
 
+        //File checking for saved url
+        boolean fileIsPresent = isFilePresent(this,filename);
+        if(!fileIsPresent)
+        {
+            Log.i(TAG,"No file found");
+            url = RemoteConfigGetData();
+            if(url == "" || isEmulator())
+            {
+                Log.i(TAG,"OpenUnityGame");
+            }
+            else
+            {
+                Log.i(TAG,"OpenUnityGame");
+            }
+
+        }
+        else
+        {
+            url = read(this,filename);
+            if(hasConnection(this))
+            {
+                Log.i(TAG,"Load WebView");
+            }
+            else
+            {
+                Log.i(TAG,"ConnectionRequired");
+                errorImageView.setVisibility(View.VISIBLE);
+                errorLinearLayout.setVisibility(View.VISIBLE);
+            }
+        }
+
+    }
+
+    public boolean isEmulator() {//emulator
+        return Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk".equals(Build.PRODUCT);
+    }
+
+
+    private String RemoteConfigGetData()
+    {
         FirebaseRemoteConfig mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
         FirebaseRemoteConfigSettings configSettings = new FirebaseRemoteConfigSettings.Builder()
                 .setMinimumFetchIntervalInSeconds(3600)
@@ -63,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<Boolean> task) {
                         if (task.isSuccessful()) {
                             boolean updated = task.getResult();
-                            Log.d(TAG, "Config params updated: " + updated);
+
                             Toast.makeText(MainActivity.this, "Fetch and activate succeeded",
                                     Toast.LENGTH_SHORT).show();
 
@@ -75,28 +135,8 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-        url = mFirebaseRemoteConfig.getString("url");
-        Log.i(TAG,url);
-        boolean fileIsPresent = isFilePresent(this,filename);
-        if(!fileIsPresent)
-        {
-            Log.i(TAG,"No file found");
-            Log.i(TAG,"Connect to firebase");
-        }
+       return mFirebaseRemoteConfig.getString("url");
 
-        else
-        {
-            url = read(this,filename);
-            if(hasConnection(this))
-            {
-                Log.i(TAG,"Load WebView");
-            }
-            else
-            {
-
-            }
-        }
-        
     }
 
     private String read(Context context, String fileName) {
@@ -117,6 +157,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void Hide(View view)
+    {
+
+    }
     private boolean create(Context context, String fileName, String jsonString){
         String FILENAME = "url_storage.json";
         try {

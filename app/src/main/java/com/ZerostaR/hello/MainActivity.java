@@ -18,6 +18,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.webkit.WebSettings;
@@ -34,8 +36,10 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 
 public class MainActivity extends AppCompatActivity {
 
+    WebView myWebView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         String filename = "url_storage.json";
         String TAG = "MainActivity";
@@ -44,7 +48,9 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout errorLinearLayout;
         setContentView(R.layout.activity_main);
 
-        WebView myWebView = (WebView) findViewById(R.id.webview);
+        myWebView = (WebView) findViewById(R.id.webview);
+
+
         //enabling DOM and JavaScript
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
@@ -56,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         errorLinearLayout.setVisibility(View.GONE);
 
 
+
         //Button
         Button btn1 = (Button) findViewById(R.id.button);
         btn1.setOnClickListener(new OnClickListener() {
@@ -65,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
                 finish();
                 System.exit(0);
             }});
+
+
 
         //File checking for saved url
         boolean fileIsPresent = isFilePresent(this,filename);
@@ -103,7 +112,22 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_BACK:
+                    if (myWebView.canGoBack()) {
+                        myWebView.goBack();
+                    } else {
+                      //Nothing happens)
+                    }
+                    return true;
+            }
 
+        }
+        return super.onKeyDown(keyCode, event);
+    }
     public boolean isSIMExists()
     {
         TelephonyManager telMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);

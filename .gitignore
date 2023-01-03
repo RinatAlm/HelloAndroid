@@ -28,3 +28,19 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+#heavy unity libs{
+
+#unityLibrary check
+unityLibrary/symbols
+unityLibrary/libs
+unityLibrary/build
+unityLibrary/proguard-unity.txt
+unityLibrary/src/main/res
+unityLibrary/src/main/jniStaticLibs
+unityLibrary/src/main/jniLibs
+unityLibrary/src/main/java
+unityLibrary/src/main/Il2CppOutputProject
+unityLibrary/src/main/assets
+!unityLibrary/build.gradle
+!unityLibrary/src/main/AndroidManifest.xml

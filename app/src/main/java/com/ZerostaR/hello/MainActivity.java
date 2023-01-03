@@ -3,9 +3,12 @@ package com.ZerostaR.hello;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.StatusBarManager;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.nfc.Tag;
 import android.os.Build;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
@@ -22,6 +25,9 @@ import java.io.InputStreamReader;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
+import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Button;
@@ -30,8 +36,10 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
+import com.unity3d.player.UnityPlayerActivity;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -51,24 +59,36 @@ public class MainActivity extends AppCompatActivity {
         myWebView = (WebView) findViewById(R.id.webview);
 
 
-        //enabling DOM and JavaScript
+        //enabling DOM and JavaScript adding some support in java
         WebSettings webSettings = myWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
+
         webSettings.setDomStorageEnabled(true);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setUseWideViewPort(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setSupportZoom(false);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+
         //Hiding error messages
         errorImageView = findViewById(R.id.imageView);
         errorImageView.setVisibility(View.GONE);
         errorLinearLayout = findViewById(R.id.linearLayout);
         errorLinearLayout.setVisibility(View.GONE);
 
-
+        HideActionBar();//Status bar and view change left
 
         //Button
         Button btn1 = (Button) findViewById(R.id.button);
         btn1.setOnClickListener(new OnClickListener() {
 
             @Override
-            public void onClick(View v) {
+            public void onClick(View v) {//Exit on error
                 finish();
                 System.exit(0);
             }});
@@ -80,18 +100,29 @@ public class MainActivity extends AppCompatActivity {
         if(!fileIsPresent)
         {
             Log.i(TAG,"No file found");
-            url = RemoteConfigGetData();
+            try {
+                url = RemoteConfigGetData();
+            }
+            catch(Exception e)
+            {
+                url = "";
+                Log.i(TAG,e.toString());
+            }
+
             if(url.equals("") || isEmulator() || isSIMExists())
             {
                 Log.i(TAG,"OpenUnityGame");
-                //Switch to else
-                Log.i(TAG,"Save URL link");
-                create(this,filename,url);
-                myWebView.loadUrl(url);
+                OpenUnityGame();
+
             }
             else
             {
+                Log.i(TAG,"Save URL link");
+                create(this,filename,url);
+                // Hide the status bar.
 
+                myWebView.loadUrl(url);
+                HideActionBar();
             }
 
         }
@@ -102,15 +133,23 @@ public class MainActivity extends AppCompatActivity {
             {
                 Log.i(TAG,"Load WebView");
                 myWebView.loadUrl(url);
+                HideActionBar();
             }
             else
             {
                 Log.i(TAG,"ConnectionRequired");
+                myWebView.setVisibility(View.GONE);
                 errorImageView.setVisibility(View.VISIBLE);
                 errorLinearLayout.setVisibility(View.VISIBLE);
             }
         }
 
+    }
+    private void OpenUnityGame()
+    {
+        Intent i = new Intent(this, UnityPlayerActivity.class);
+        startActivity(i);
+        finish();
     }
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -151,12 +190,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void HideActionBar()
+    {
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
+    }
     public boolean isEmulator() {//is emulator ?
         if (BuildConfig.DEBUG) return false;//For debugging
-        /*val phoneModel = Build.MODEL; val buildProduct = Build.PRODUCT;
-        val buildHardware = Build.HARDWARE;
-        String brand = Build.BRAND;*/
-
+        String buildProduct = Build.PRODUCT;
+        String buildHardware = Build.HARDWARE;
+        /*
+        String phoneModel = Build.MODEL;
+        String brand = Build.BRAND;
+*/
         return Build.FINGERPRINT.startsWith("generic")
                 || Build.FINGERPRINT.startsWith("unknown")
                 || Build.MODEL.contains("google_sdk")
@@ -164,15 +212,19 @@ public class MainActivity extends AppCompatActivity {
                 || Build.MODEL.contains("Android SDK built for x86")
                 || Build.MANUFACTURER.contains("Genymotion")
                 || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
-                || "google_sdk".equals(Build.PRODUCT);
+                || buildHardware == "goldfish"
+                || Build.BRAND.contains("google")
+                || Build.SERIAL.contains("unknown")
+                || buildHardware == "vbox86"
+                || "google_sdk".equals(Build.PRODUCT)
+                || buildProduct == "vbox86p";
                 /*
-                || buildProduct == "vbox86p"
                 || Build.BOARD.lowercase(Locale.getDefault()).contains("nox")
                 || Build.BOOTLOADER.lowercase(Locale.getDefault()).contains("nox")
                 || buildHardware.lowercase(Locale.getDefault()).contains("nox")
                 || buildProduct.lowercase(Locale.getDefault()).contains("nox");
+*/
 
-                 */
     }
 
 
@@ -189,15 +241,19 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<Boolean> task) {
                         if (task.isSuccessful()) {
+                            /*
                             boolean updated = task.getResult();
 
                             Toast.makeText(MainActivity.this, "Fetch and activate succeeded",
                                     Toast.LENGTH_SHORT).show();
-
+*/
 
                         } else {
+                            /*
                             Toast.makeText(MainActivity.this, "Fetch failed",
                                     Toast.LENGTH_SHORT).show();
+                                    */
+
                         }
 
                     }

@@ -4,4 +4,5 @@
     <string name="connectionRequired">Для работы приложения необжодим доступ к сети</string>
     <string name="ОК_text">ОК</string>
 
+    <string name="game_view_content_description">Game view</string>
 </resources>
